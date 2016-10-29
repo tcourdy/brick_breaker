@@ -21,20 +21,30 @@ var delta_x = 2;
 var delta_y = -2;
 
 setInterval(draw, 10);
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
 
 function draw(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_ball();
+    draw_paddle();
 
     x += delta_x;
     y += delta_y;
 
-    if(y + delta_y < ball_radius || y + delta_y > canvas.height - ball_radius){
+    if(y + delta_y < ball_radius || y + delta_y > canvas.height - ball_radius ){
         delta_y = -delta_y;
     }
 
     if(x + delta_x < ball_radius  || x + delta_x > canvas.width - ball_radius){
         delta_x = -delta_x;
+    }
+
+    if(right_key_pressed && (paddleX < canvas.width - paddleWidth)) {
+        paddleX += 7;
+    }
+    else if(left_key_pressed && paddleX > 0) {
+        paddleX -= 7;
     }
 }
 
@@ -47,7 +57,7 @@ function draw_ball(){
 }
 
 
-function drawPaddle() {
+function draw_paddle() {
     ctx.beginPath();
     ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
     ctx.fillStyle = "#0095DD";
@@ -55,3 +65,21 @@ function drawPaddle() {
     ctx.closePath();
 }
 
+
+function keyDownHandler(e) {
+    if(e.keyCode == 39) {
+        right_key_pressed = true;
+    }
+    else if(e.keyCode == 37) {
+        left_key_pressed = true;
+    }
+}
+
+function keyUpHandler(e) {
+    if(e.keyCode == 39) {
+        right_key_pressed = false;
+    }
+    else if(e.keyCode == 37) {
+        left_key_pressed = false;
+    }
+}
