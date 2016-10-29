@@ -1,0 +1,10 @@
+.cust-padding {
+	padding: 20px;
+	margin: 0;
+}
+
+canvas {
+	background: #eee;
+	display: block;
+	margin: 0 auto;
+}
