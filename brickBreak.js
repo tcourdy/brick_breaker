@@ -7,6 +7,8 @@ var x = canvas.width/2;
 var y = canvas.height - 30;
 var ball_radius = 10;
 
+var isLooping;
+
 // paddle ---------
 var paddleHeight = 10;
 var paddleWidth = 75;
@@ -18,6 +20,7 @@ var score = 0;
 var level = 1;
 
 // bricks ------------
+var bricks = [];
 var brickRowCount = level;
 var brickColumnCount = level;
 var brickWidth = 75;
@@ -27,28 +30,21 @@ var brickOffsetTop = 30;
 var brickOffsetLeft = 30;
 var brickCount = brickRowCount * brickColumnCount;
 
+
+// item info
+var dropped_item = {type: "", start_x: -1, start_y: -1};
 var items = [];
-
-// initialize bricks
-var bricks = [];
-for(c = 0; c < brickColumnCount; c++) {
-    bricks[c] = [];
-    for(r=0; r<brickRowCount; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1, item: -1, color: getRandomColor()};
-    }
-}
-
-// end bricks ----------------
+var item_speed = -3;  //only in y direction
 
 
 var right_key_pressed = false;
 var left_key_pressed = false;
 
+var item_dropped = false;
+
 // ball speed
 var delta_x = 5;
 var delta_y = -5;
-
-draw();
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -67,6 +63,12 @@ function collisionDetection() {
                     alert("You won this level");
                     setupNextLevel();
                     return;
+                }
+
+                // don't want to drop item after last brick only if more bricks remain.
+                if(b.item == 1){
+                    item_dropped = true;
+                    dropped_item = {type: "", start_x: b.x, start_y: b.y};
                 }
             }
         }
@@ -91,6 +93,19 @@ function draw(){
     draw_score();
     draw_life();
 
+    if(item_dropped){
+        draw_item();
+
+        if(dropped_item.start_x == paddleX && dropped_item.start_y == 0){ //item hit paddle
+            // grant power up
+        } else if(dropped_item.start_y > canvas.height){
+            item_dropped = false;
+        } else{
+            item_dropped.start_y += item_speed;
+        }
+    }
+
+    // update y position of ball
     if(y + delta_y < ball_radius ){
         delta_y = -delta_y;
     } else if(y + delta_y > canvas.height - ball_radius){
@@ -101,10 +116,13 @@ function draw(){
         }
     }
 
+    // update x position of ball
     if(x + delta_x < ball_radius  || x + delta_x > canvas.width - ball_radius){
         delta_x = -delta_x;
     }
 
+
+    // update paddle movement
     if(right_key_pressed && (paddleX < canvas.width - paddleWidth)) {
         paddleX += 7;
     }
@@ -115,7 +133,7 @@ function draw(){
     x += delta_x;
     y += delta_y;
 
-    requestAnimationFrame(draw);
+    isLooping = requestAnimationFrame(draw);
 }
 
 function draw_ball(){
@@ -138,6 +156,7 @@ function draw_paddle() {
 function draw_bricks() {
     for(c=0; c<brickColumnCount; c++) {
         for(r=0; r<brickRowCount; r++) {
+            // don't draw the brick if it has been destroyed
             if(bricks[c][r].status == 0){
                 continue;
             }
@@ -178,8 +197,13 @@ function setup_bricks(){
     for(c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
         for(r=0; r < brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1, item: -1, color: getRandomColor()};
+            item_prob = 1;//Math.floor(Math.random() * 10);
+            bricks[c][r] = { x: 0, y: 0, status: 1, item: item_prob, color: getRandomColor()};
         }
+    }
+
+    if(!isLooping){
+        draw();
     }
 }
 
@@ -189,11 +213,21 @@ function draw_life(){
     ctx.fillText("Lives: "+ lives, canvas.width - 100, 20);
 }
 
+function draw_item(){
+    if(item_dropped){
+        ctx.beginPath();
+        ctx.arc(dropped_item.start_x, dropped_item.start_y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "yellow";
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
 function decrement_life(){
     lives--;
     if(lives <= 0){
         alert("GAME OVER!");
-        document.location.reload();
+        cancelAnimationFrame(isLooping);
     } else{
         alert("You lost a life.  Ready to start again?");
         x = canvas.width/2;
@@ -201,6 +235,8 @@ function decrement_life(){
         delta_x = 2;
         delta_y = -2;
         paddleX = (canvas.width-paddleWidth)/2;
+        right_key_pressed = false;
+        left_key_pressed = false;
     }
 }
 
