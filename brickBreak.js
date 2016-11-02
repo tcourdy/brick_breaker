@@ -34,13 +34,14 @@ var brickCount = brickRowCount * brickColumnCount;
 // item info
 var dropped_item = {type: "", start_x: -1, start_y: -1};
 var items = [];
-var item_speed = -3;  //only in y direction
+var item_speed = 3;  //only in y direction
 
 
 var right_key_pressed = false;
 var left_key_pressed = false;
 
 var item_dropped = false;
+var has_power_up = false;
 
 // ball speed
 var delta_x = 5;
@@ -49,7 +50,7 @@ var delta_y = -5;
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
-function collisionDetection() {
+function collision_detection() {
     for(c=0; c < brickColumnCount; c++) {
         for(r=0; r < brickRowCount; r++) {
             var b = bricks[c][r];
@@ -66,6 +67,7 @@ function collisionDetection() {
                 }
 
                 // don't want to drop item after last brick only if more bricks remain.
+                // only one item drops at a time.  enhance this later
                 if(b.item == 1){
                     item_dropped = true;
                     dropped_item = {type: "", start_x: b.x, start_y: b.y};
@@ -88,7 +90,7 @@ function draw(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_ball();
     draw_paddle();
-    collisionDetection();
+    collision_detection();
     draw_bricks();
     draw_score();
     draw_life();
@@ -96,13 +98,16 @@ function draw(){
     if(item_dropped){
         draw_item();
 
-        if(dropped_item.start_x == paddleX && dropped_item.start_y == 0){ //item hit paddle
-            // grant power up
-        } else if(dropped_item.start_y > canvas.height){
+        // console.log("XPOS " + dropped_item.start_x);
+        // console.log("YPOS " + dropped_item.start_y);
+        if(dropped_item.start_x <= paddleX + paddleWidth
+            && (dropped_item.start_y >= canvas.height - paddleHeight && dropped_item.start_y < canvas.height)){ //item hit paddle
+            apply_power_up();
+        } else if(dropped_item.start_y == canvas.height + 10){
             item_dropped = false;
-        } else{
-            item_dropped.start_y += item_speed;
         }
+
+        dropped_item.start_y += item_speed;
     }
 
     // update y position of ball
@@ -202,7 +207,7 @@ function setup_bricks(){
         }
     }
 
-    if(!isLooping){
+    if(isLooping == undefined){
         draw();
     }
 }
@@ -227,17 +232,41 @@ function decrement_life(){
     lives--;
     if(lives <= 0){
         alert("GAME OVER!");
-        cancelAnimationFrame(isLooping);
+        isLooping = cancelAnimationFrame(isLooping);
     } else{
         alert("You lost a life.  Ready to start again?");
         x = canvas.width/2;
         y = canvas.height - 30;
-        delta_x = 2;
-        delta_y = -2;
         paddleX = (canvas.width-paddleWidth)/2;
         right_key_pressed = false;
         left_key_pressed = false;
     }
+}
+
+function pause(){
+    if(isLooping != undefined){
+        isLooping = cancelAnimationFrame(isLooping);
+        document.getElementById("pause").innerHTML = "Resume";
+    } else{
+        isLooping = draw();
+        document.getElementById("pause").innerHTML = "Pause";
+    }
+
+}
+
+function apply_power_up(){
+    //TODO create multiple power ups and randomly select one and apply it.
+    //some power up ideas include:  multiple balls, extra life, speed up ball, slow down ball
+    console.log("in power up function");
+    has_power_up = true;
+    paddleWidth = 150;
+    window.setTimeout(power_up_timeout, 5000);
+}
+
+function power_up_timeout(){
+    console.log("POWER UP TIMEOUT");
+    has_power_up = false;
+    paddleWidth = 75;
 }
 
 

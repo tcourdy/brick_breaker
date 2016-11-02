@@ -3,6 +3,10 @@
 	margin: 0;
 }
 
+.cust-padding-left{
+	padding-left: 430px;
+}
+
 canvas {
 	background: #eee;
 	display: block;
